@@ -8,3 +8,4 @@ bench/*
 coverage/*
 test/*
 tmp/*
+.idea
