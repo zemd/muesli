@@ -49,6 +49,9 @@ class Book extends BaseModel {
       nameStrategy: 'camel', // currently affected only during json serialization for attributes' keys
 
       strict: true, // if true is set, then model won't accept non schema attributes and will throw an error
+      
+      provideGetters: true, // default to true -- give access to direct access to props via model.values object
+      provideSetters: true, // default to true
 
       validators: [ // model validators that validate whole object's values
         validators.equalPasswords('validation-group1'),
@@ -113,6 +116,77 @@ book2.validate('group1', (err, results) => {
   console.log(myModel.get('fullName')); // output -> 'Dmitry '
   myModel.set('lastName', 'Zelenetskiy');
   console.log(myModel.get('fullName')); // output -> 'Dmitry Zelenetskiy'
+```
+
+### fromJSON and toJSON
+
+```javascript
+  class Author extends Model {
+    constructor() {
+      super({
+        name: {
+          filter: 'string',
+          constraints: [constrains.required()]
+        },
+        lastName: {
+          filter: 'string'
+        }
+      });
+    }
+  }
+  const horror = Author.fromJSON({
+    name: 'Stephen',
+    lastName: 'King'
+  });
+  
+  // horror instanceof Author => true
+   
+   console.log(horror.toJSON());
+   // {name: "Stephen", lastName: "King"}
+```
+
+### Using `provideGetters` and `provideSetters` options
+
+if `provideGetters` and `provideSetters` options are set to `true`, then you can use props' values directly via 
+`model.values` object.
+
+Example:
+```javascript
+  class Author extends Model {
+    constructor() {
+      super({
+        name: {
+          filter: 'string',
+          value: 'Default value'
+        },
+        age: {
+          filter: 'number'
+        }
+      });
+    }
+  }
+  
+  const model = new Author();
+  console.log(model.values.name); // outputs: 'Default value'
+  console.log(model.values.age); // outputs: 0
+  
+  // or you can use setter
+  model.values.age = 30;
+  console.log(model.values.age); // outputs: 30
+```
+
+`model.values` object can't be extended. only props from defined schema are available. Setters won't be provided for 
+computed properties.  
+
+### Model version
+
+If you want to use mutable version of the model, you can check if models are not equal by comparing their versions.
+
+```javascript
+  const model = Model.fromJSON({name: 'Stephen'});
+  console.log(model.version); // output: 2
+  model.set('name', 'Dmitry');
+  console.log(model.version); // output: 3
 ```
 
 ## Usage in browser

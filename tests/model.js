@@ -357,7 +357,7 @@ test('fromJSON will throw an error when not defined prop is coming in strict mod
 });
 
 test('Computed properties', t => {
-  t.plan(5);
+  t.plan(6);
 
   const inst = new BaseModel({
     firstName: {
@@ -383,7 +383,106 @@ test('Computed properties', t => {
 
   t.is(inst.get('fullName'), 'Dmitry Zelenetskiy');
 
+  inst.set('lastName', 'Zelenetskiy2');
+  t.is(inst.get('fullName'), 'Dmitry Zelenetskiy2');
+
   t.throws(function () {
     inst.set('fullName', 'Bill Gates');
   })
+});
+
+test('Immutable model', t => {
+  t.plan(9);
+
+  class Author extends BaseModel {
+    constructor() {
+      super({
+        firstName: {
+          filter: String,
+          value: 'Default Name'
+        },
+        lastName: {
+          filter: String
+        }
+      }, {
+        immutable: true
+      });
+    }
+  }
+
+  const inst = Author.fromJSON({firstName: 'Dmitry'});
+  const newInst = inst.set('lastName', 'Zelenetskiy');
+
+  t.true(inst.getOption('immutable'));
+  t.true(newInst.getOption('immutable'));
+
+  t.is(inst.get('firstName'), 'Dmitry');
+  t.is(inst.get('lastName'), '');
+
+  t.false(newInst === inst);
+  t.true(inst instanceof Author);
+  t.true(newInst instanceof Author);
+
+  t.is(newInst.get('firstName'), 'Dmitry');
+  t.is(newInst.get('lastName'), 'Zelenetskiy');
+});
+
+test('provideGetters and provideSetters', t => {
+  t.plan(4);
+
+  class Author extends BaseModel {
+    constructor() {
+      super({
+        firstName: {
+          filter: String,
+          value: 'Default Name'
+        },
+        lastName: {
+          filter: String
+        },
+        fullName: {
+          filter: function (deps = []) {
+            return deps.join(' ');
+          },
+          computed: ['firstName', 'lastName']
+        }
+      });
+    }
+  }
+
+  const inst = Author.fromJSON({firstName: 'Dmitry'});
+  t.is(inst.values.firstName, 'Dmitry');
+
+  inst.values.lastName = 'Zelenetskiy';
+  t.is(inst.values.lastName, 'Zelenetskiy');
+
+  t.is(inst.values.fullName, 'Dmitry Zelenetskiy');
+  t.throws(() => {
+    inst.values.fullName = 'Custom Name';
+  });
+});
+
+test('version', t => {
+  t.plan(2);
+
+  class Author extends BaseModel {
+    constructor() {
+      super({
+        firstName: {
+          filter: String,
+          value: 'Default Name'
+        },
+        lastName: {
+          filter: String
+        }
+      });
+    }
+  }
+
+  const inst = Author.fromJSON({firstName: 'Dmitry'});
+  let version = inst.version;
+  t.true(inst.version > 0);
+
+  inst.set('lastName', 'Zelenetskiy');
+  t.is(inst.version, ++version);
 });

@@ -34,6 +34,12 @@ exports.mapAsserts = function (constraints, checkValue, propName, group = Model.
     });
 };
 
+/**
+ * Executes all check functions and returns observable with filtered array of results
+ *
+ * @param {function[]} checks
+ * @returns {Observable<Error[]>}
+ */
 exports.proceedChecks = function (checks = []) {
   if (checks.length === 0) {
     return Rx.Observable.return([]);
@@ -68,4 +74,44 @@ exports.extractFilter = function (filter) {
     return filter;
   }
   throw new ModelError(`No filter defined with ${_.toString(filter)} name`);
+};
+
+/**
+ * @param {Model} ctx
+ * @param {[]} [getters]
+ * @param {[]} [setters]
+ */
+exports.provideModifiers = function (ctx, getters = [], setters = []) {
+  if (!getters.length && !setters.length) {
+    return;
+  }
+  let values = {};
+  let descriptors = {};
+
+  getters.forEach(prop => {
+    descriptors[prop] = Object.assign({}, descriptors[prop], {
+      get: function () {
+        return ctx.get(prop);
+      }
+    });
+  });
+
+  setters.forEach(prop => {
+    descriptors[prop] = Object.assign({}, descriptors[prop], {
+      set: function(value) {
+        return ctx.set(prop, value);
+      }
+    });
+  });
+
+  Object.keys(descriptors)
+    .forEach((prop) => {
+      Object.defineProperty(values, prop, descriptors[prop])
+    });
+
+  Object.defineProperty(ctx, 'values', {
+    get: function () {
+      return Object.freeze(values);
+    }
+  });
 };
