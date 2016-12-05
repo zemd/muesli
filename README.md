@@ -8,6 +8,7 @@ Library for managing model data. It includes base class that you should inherit 
 [![CircleCI](https://circleci.com/gh/zemd/muesli/tree/master.svg?style=svg)](https://circleci.com/gh/zemd/muesli/tree/master)
 [![dependencies:?](https://img.shields.io/david/zemd/muesli.svg)](https://david-dm.org/zemd/muesli)
 [![devDependencies:?](https://img.shields.io/david/dev/zemd/muesli.svg?style=flat)](https://david-dm.org/zemd/muesli)
+[![Inline docs](http://inch-ci.org/github/zemd/muesli.svg?branch=master)](http://inch-ci.org/github/zemd/muesli)
 
 ## Installation
 
