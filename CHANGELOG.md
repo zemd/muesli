@@ -1,3 +1,7 @@
+## 2.0.0
+ - upgrading rxjs to version 5.0.0-rc5
+ - fixing tests
+ 
 ## 1.0.2
 
  - adding `immutable` option to get new instance each time property is set new value
