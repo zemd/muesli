@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const Rx = require('rx');
+const Rx = require('rxjs');
 const runAsync = require('run-async');
 const ValidationError = require('./errors/validation-error');
 const {ModelError} = require('./errors');
@@ -21,13 +21,13 @@ exports.mapAsserts = function (constraints, checkValue, propName, group = Model.
     .filter(_.isFunction)
     .filter(filterFunctionGroup(group))
     .map((constraint) => {
-      return Rx.Observable.fromPromise(() => runAsync(constraint)(checkValue))
+      return Rx.Observable.fromPromise(runAsync(constraint)(checkValue))
         .catch((err) => {
           if (err instanceof ValidationError) {
             err.propertyName = propName;
             err.group = group;
 
-            return Rx.Observable.return(err);
+            return Rx.Observable.of(err);
           }
           return Rx.Observable.throw(err);
         });
@@ -42,7 +42,7 @@ exports.mapAsserts = function (constraints, checkValue, propName, group = Model.
  */
 exports.proceedChecks = function (checks = []) {
   if (checks.length === 0) {
-    return Rx.Observable.return([]);
+    return Rx.Observable.of([]);
   }
 
   return Rx.Observable.forkJoin(
