@@ -38,8 +38,8 @@ class Model extends Emitter {
 
     provideModifiers(
       this,
-       getters ? this._storage.getSchemaPropsList() : [],
-       setters ? this._storage.getSchemaPropsList().filter(prop => !this._storage.hasSchemaPropKey(prop, 'computed')) : []
+      getters ? this._storage.getSchemaPropsList() : [],
+      setters ? this._storage.getSchemaPropsList().filter(prop => !this._storage.hasSchemaPropKey(prop, 'computed')) : []
     );
 
     if (!this._storage.getOptionsBoolValue('immutable', false)) {
@@ -119,6 +119,7 @@ class Model extends Emitter {
 
     let oldValue = this.get(prop);
     if (this._storage.getOptionsBoolValue('immutable')) {
+      // TOOD: use `this.clone();` instead
       // avoid infinite set() execution
       let newModel = this.constructor.fromJSON(this.toJSON(), false, {immutable: false});
       newModel.set(prop, value);
@@ -221,7 +222,11 @@ class Model extends Emitter {
           (Array.isArray(groups) && (groups.indexOf(group) > -1 || group === Model.DEFAULT_GROUP))
       })
       .reduce((prev, curr) => {
-        prev[changeCaseMethod(curr)] = this.get(curr);
+        let val = this.get(curr);
+        if (val instanceof Model) {
+          val = val.toJSON();
+        }
+        prev[changeCaseMethod(curr)] = val;
         return prev;
       }, {});
   }
@@ -285,6 +290,10 @@ class Model extends Emitter {
    */
   getOption(key) {
     return this._storage.getOptionValue(key);
+  }
+
+  clone() {
+    // TODO:
   }
 }
 

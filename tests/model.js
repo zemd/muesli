@@ -486,3 +486,35 @@ test('version', t => {
   inst.set('lastName', 'Zelenetskiy');
   t.is(inst.version, ++version);
 });
+
+test("toJSON with nested models", t => {
+  class FirstName extends BaseModel {
+    constructor() {
+      super({
+        firstName: {
+          filter: String,
+          value: "Dmitry"
+        }
+      });
+    }
+  }
+
+  class Author extends BaseModel {
+    constructor() {
+      super({
+        firstName: {
+          filter: (v) => FirstName.fromJSON(v)
+        },
+        lastName: {
+          filter: String,
+          value: "Zelenetskiy"
+        }
+      });
+    }
+  }
+
+  const inst = new Author();
+  const json = inst.toJSON();
+
+  t.deepEqual(json, {lastName: "Zelenetskiy", firstName: {firstName: "Dmitry"}});
+});
