@@ -1,6 +1,6 @@
 'use strict';
 
-const Rx = require('rxjs');
+const Rx = require('rxjs/Rx');
 const _ = require('lodash');
 const changeCase = require('change-case');
 
