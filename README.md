@@ -1,5 +1,7 @@
 # Muesli
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/zemd/muesli.svg)](https://greenkeeper.io/)
+
 Library for managing model data. It includes base class that you should inherit from.
 
 [![npm version](https://badge.fury.io/js/muesli.svg)](https://www.npmjs.com/package/muesli)
