@@ -1,6 +1,6 @@
 {
   "name": "muesli",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Library for managing model data",
   "main": "index.js",
   "scripts": {
