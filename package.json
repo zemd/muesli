@@ -1,8 +1,9 @@
 {
   "name": "muesli",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Library for managing model data",
-  "main": "index.js",
+  "main": "es6/common/index.js",
+  "jsnext:main": "index.js ",
   "scripts": {
     "test": "NODE_ENV=test ava --verbose",
     "es5-umd": "rollem -c rollup.config.browser.es5.js",
