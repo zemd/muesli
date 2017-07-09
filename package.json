@@ -1,10 +1,14 @@
 {
   "name": "muesli",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "Library for managing model data",
   "main": "index.js",
   "scripts": {
-    "test": "ava --verbose"
+    "test": "NODE_ENV=test ava --verbose",
+    "es5-umd": "rollem -c rollup.config.browser.es5.js",
+    "es5-commonjs": "rollem -c rollup.config.cjs.es5.js",
+    "es6-commonjs": "rollem -c rollup.config.cjs.es6.js",
+    "build": "npm run es5-umd && npm run es5-commonjs && npm run es6-commonjs"
   },
   "repository": {
     "type": "git",
@@ -20,11 +24,18 @@
     "change-case": "^3.0.1",
     "lodash": "^4.17.4",
     "run-async": "^2.3.0",
-    "rx-emitter": "^2.0.0",
-    "rxjs": "^5.4.1"
+    "rx-emitter": "^2.1.0",
+    "rxjs": "^5.4.2"
   },
   "devDependencies": {
-    "ava": "^0.20.0"
+    "ava": "^0.20.0",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-preset-es2015": "^6.24.1",
+    "rollem": "^1.12.0",
+    "rollup": "^0.43.0",
+    "rollup-plugin-babel": "^2.7.1",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-node-resolve": "^3.0.0"
   },
   "ava": {
     "files": [
@@ -32,11 +43,21 @@
       "!tests/utils/*.js"
     ],
     "sources": [
-      "lib/**/*.js"
+      "src/**/*.js",
+      "index.js",
+      "utils.js"
     ],
     "require": [
       "babel-register"
-    ],
-    "babel": "inherit"
+    ]
+  },
+  "babel": {
+    "env": {
+      "test": {
+        "presets": [
+          "@ava/stage-4"
+        ]
+      }
+    }
   }
 }

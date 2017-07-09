@@ -1,9 +1,7 @@
 'use strict';
 
-const _ = require('lodash');
-
-module.exports = function (value, returnEmptyValue = true) {
-  if (_.isNil(value)) {
+export default function (value, returnEmptyValue = true) {
+  if (value == null) {
     if (returnEmptyValue) {
       return '';
     }

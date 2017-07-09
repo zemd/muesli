@@ -1,8 +1,10 @@
 'use strict';
 
-const {ConstraintError} = require('../errors');
+// NOTE: this is example constraint
 
-module.exports = function (groups = []) {
+import ConstraintError from '../errors/ConstraintError';
+
+export default function (groups = []) {
   function required(fieldValue) {
     const done = this.async();
     setTimeout(() => {

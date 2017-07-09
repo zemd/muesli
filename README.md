@@ -1,10 +1,9 @@
 # Muesli
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/zemd/muesli.svg)](https://greenkeeper.io/)
-
 Library for managing model data. It includes base class that you should inherit from.
 
 [![npm version](https://badge.fury.io/js/muesli.svg)](https://www.npmjs.com/package/muesli)
+[![Greenkeeper badge](https://badges.greenkeeper.io/zemd/muesli.svg)](https://greenkeeper.io/)
 [![Build Status](https://travis-ci.org/zemd/muesli.svg?branch=master)](https://travis-ci.org/zemd/muesli)
 [![Code Climate](https://codeclimate.com/github/zemd/muesli/badges/gpa.svg)](https://codeclimate.com/github/zemd/muesli)
 [![CircleCI](https://circleci.com/gh/zemd/muesli/tree/master.svg?style=svg)](https://circleci.com/gh/zemd/muesli/tree/master)
@@ -26,37 +25,46 @@ yarn add muesli
 
 ## Usage
 
-Define you model type with simple inheritance
+Define your model type with simple inheritance
 
 ```javascript
-class Book extends BaseModel {
+import Model from 'muesli';
+// or
+// const Model = require('muesli');
+
+class Book extends Model {
   constructor() {
     super({
       ISDN: {
-        filter: String, // filters are applies when you fetch the value, so you can rely on it's eventual type
+        filter: String, // filters apply when you fetch the value, so you can rely on attribute's type
         value: '', // default value
         constraints: [constraints.required('validate-group')], // array of constraints that are used for validation of the model
         validate: function (value) {
           // use if for creating custom constraint during model definition
+          // it can be async and return Promise or you might create done callback by using `const done = this.async();` 
         },
         json: {
-          groups: ['serialization-group']
-        }
+          groups: ['serialization-group'],
+        },
       },
       title: {
-        filter: String
-      }
+        filter: String,
+      },
     }, {
       // Here you can override several options or put your own
+      // all these values are used by default
 
       nameStrategy: 'camel', // currently affected only during json serialization for attributes' keys
 
-      strict: true, // if true is set, then model won't accept non schema attributes and will throw an error
+      strict: false, // if true is set, then model won't accept non schema attributes. It won't throw an error
+      throwOnStrictError: false, // if true it will throw an error when `strict` is true and you are trying to set non schema attribute
+      
+      returnEmptyValue: true, //
       
       provideGetters: true, // default to true -- give access to direct access to props via model.values object
       provideSetters: true, // default to true
 
-      validators: [ // model validators that validate whole object's values
+      validators: [ // model validators that can validate all object's values
         validators.equalPasswords('validation-group1'),
         validators.validDates('validation-group2')
       ]
@@ -191,10 +199,6 @@ If you want to use mutable version of the model, you can check if models are not
   model.set('name', 'Dmitry');
   console.log(model.version); // output: 3
 ```
-
-## Usage in browser
-
-Use browserify or any other tool that can convert `require` loader into desired state.
 
 ## License
 
