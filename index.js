@@ -278,7 +278,7 @@ class Model extends Emitter {
     );
 
     if (!cb) {
-      return validate$.toPromise();
+      return validate$;
     }
 
     validate$
