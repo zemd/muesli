@@ -155,7 +155,7 @@ class Model extends Emitter {
 
     let oldValue = this.get(prop);
     if (this._options.getBoolean('immutable')) {
-      return this.fromJSON(Object.assign({}, this._values.raw, { [prop]: value }));
+      return this.constructor.fromJSON(Object.assign({}, this._values.raw, { [prop]: value }));
     }
 
     this._values.setValue(prop, value);
@@ -336,7 +336,7 @@ class Model extends Emitter {
    * @return {Model}
    */
   clone() {
-    return this.fromJSON(this._values.raw);
+    return this.constructor.fromJSON(this._values.raw);
   }
 }
 

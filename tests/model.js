@@ -144,8 +144,8 @@ test.cb('Validate 1 constraint with default group and fail with ConstraintError'
   let inst = new BaseModel({
     firstName: {
       filter: 'string',
-      constraints: [required()]
-    }
+      constraints: [required()],
+    },
   });
 
   inst.validatePropsConstraints()
