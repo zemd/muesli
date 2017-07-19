@@ -306,8 +306,8 @@ test('toJSON changing nameStrategy dynamically and using different groups', t =>
   t.deepEqual(inst.toJSON(), { first_name: 'Dmitry', age: 10 });
 
   inst.setOption('nameStrategy', 'camel');
-  t.deepEqual(inst.toJSON('group1'), { firstName: 'Dmitry' });
-  t.deepEqual(inst.toJSON('group2'), { age: 10 });
+  t.deepEqual(inst.toJSON({group: 'group1'}), { firstName: 'Dmitry' });
+  t.deepEqual(inst.toJSON({group: 'group2'}), { age: 10 });
 });
 
 test('fromJSON creates valid Model object in non strict mode', t => {

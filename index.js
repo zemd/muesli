@@ -288,11 +288,12 @@ class Model extends Emitter {
   /**
    * Serialize Model in pure object
    *
-   * @param {string} group
+   * @param {string=} group
+   * @param {string=} customNameStrategy
    * @returns {{}}
    */
-  toJSON(group = DEFAULT_GROUP) {
-    const nameStrategy = this.getOption('nameStrategy');
+  toJSON({ group = DEFAULT_GROUP, customNameStrategy } = {}) {
+    const nameStrategy = customNameStrategy || this.getOption('nameStrategy');
     let changeCaseMethod = changeCase[nameStrategy] || changeCase.camel;
 
     return this._schema.keys
