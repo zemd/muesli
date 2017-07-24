@@ -57,7 +57,7 @@ export const proceedChecks = function (checks = []) {
   return Observable.forkJoin(
     ...checks
   )
-    .map((res = []) => res.filter((v) => !!v));
+    .map((res = []) => res.filter((v) => v instanceof Error));
 };
 
 

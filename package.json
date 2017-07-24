@@ -1,6 +1,6 @@
 {
   "name": "muesli",
-  "version": "2.1.3",
+  "version": "2.1.5",
   "description": "Library for managing model data",
   "main": "es6/common/index.js",
   "jsnext:main": "index.js ",

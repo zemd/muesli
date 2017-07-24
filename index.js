@@ -91,7 +91,7 @@ class Model extends Emitter {
     nameStrategy = 'camel',
     strict = false,
     throwOnStrictError = false,
-    returnEmptyValue = true,
+    returnEmptyValue = false,
     immutable = false,
     useGetters = true,
     useSetters = true,
@@ -176,7 +176,7 @@ class Model extends Emitter {
 
     return applyFilterFn(
       this._values.getValue(prop, defaultValue),
-      this._options.getBoolean('returnEmptyValue', true),
+      this._options.getBoolean('returnEmptyValue', false),
     );
   }
 

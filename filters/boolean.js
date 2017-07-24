@@ -1,6 +1,6 @@
 'use strict';
 
-export default function (value, returnEmptyValue = true) {
+export default function (value, returnEmptyValue) {
   if (value == null) {
     if (returnEmptyValue) {
       return false;

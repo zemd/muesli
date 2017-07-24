@@ -15,7 +15,7 @@ test('Default options', t => {
 
   t.false(inst.getOption('strict'));
   t.false(inst.getOption('throwOnStrictError'));
-  t.true(inst.getOption('returnEmptyValue'));
+  t.false(inst.getOption('returnEmptyValue'));
   t.true(inst.getOption('useGetters'));
   t.true(inst.getOption('useSetters'));
   t.true(Array.isArray(inst.getOption('validators')));
