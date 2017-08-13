@@ -1,11 +1,8 @@
 'use strict';
 
-export default function (value, returnEmptyValue) {
+export default function (value, settings = {}) {
   if (!Array.isArray(value)) {
-    if (returnEmptyValue) {
-      return [];
-    }
-    return value;
+    return [value];
   }
   return value;
 };

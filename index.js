@@ -9,114 +9,31 @@ import flatten from 'lodash/fp/flatten';
 import difference from 'lodash/fp/difference';
 import Emitter from 'rx-emitter';
 import { extractDefaultValues, extractFilter, proceedChecks, mapAsserts, DEFAULT_GROUP } from './utils';
-import DataWrapper from './src/storage';
+import has from 'lodash/fp/has';
+import get from 'lodash/fp/getOr'; // getOr(defaultValue, path, object)
+import { initComputedProps, initGettersSetters } from './src/mixins';
 
 const identityFn = (v) => v;
 
-function initGettersSetters(useGetters, useSetters) {
-  if (!useGetters && !useSetters) {
-    return;
-  }
-
-  const getters = useGetters ? this._schema.keys : [];
-  const setters = useSetters ? this._schema.keys.filter((prop) => !this._schema.has(`${prop}.computed`)) : [];
-
-  let values = {};
-  let descriptors = {};
-
-  getters.forEach((prop) => {
-    descriptors[prop] = Object.assign({}, descriptors[prop], {
-      get: () => {
-        return this.get(prop);
-      }
-    });
-  });
-
-  setters.forEach((prop) => {
-    descriptors[prop] = Object.assign({}, descriptors[prop], {
-      set: (value) => {
-        return this.set(prop, value);
-      }
-    });
-  });
-
-  Object.keys(descriptors)
-    .forEach((prop) => {
-      Object.defineProperty(values, prop, descriptors[prop])
-    });
-
-  Object.defineProperty(this, 'values', {
-    get: function () {
-      return Object.freeze(values);
-    }
-  });
-}
-
-function initComputedProps() {
-  this._schema.keys
-    .filter((prop) => !!this._schema.getArray(`${prop}.computed`).length)
-    .map((prop) => {
-      let subjects = this._schema.getArray(`${prop}.computed`)
-        .map((propToObserv) => this.subject(propToObserv).startWith(this.get(propToObserv)));
-
-      return Observable.combineLatest(
-        ...subjects
-      )
-        .subscribe((results) => {
-          let oldValue = this.get(prop);
-          this._values.setValue(prop, results);
-          this.publish(prop, this.get(prop), { oldValue });
-        }, (error) => {
-          throw error;
-        });
-    });
-}
-
 class Model extends Emitter {
-  /**
-   * nameStrategy can be:
-   *  constant, dot, header, lower, lcFirst, param, pascal, path, sentence, snake, swap, title, upper, ucFirst
-   *
-   * @param {{}} [schema]
-   * @param {string} nameStrategy
-   * @param {boolean} strict
-   * @param {boolean} throwOnStrictError
-   * @param {boolean} returnEmptyValue
-   * @param {boolean} immutable
-   * @param {boolean} useGetters
-   * @param {boolean} useSetters
-   * @param {[]} validators
-   */
-  constructor(schema = {}, {
-    nameStrategy = 'camel',
-    strict = false,
-    throwOnStrictError = false,
-    returnEmptyValue = false,
-    immutable = false,
-    useGetters = true,
-    useSetters = true,
-    validators = []
-  } = {}) {
+  constructor() {
     super();
+    this.constructor.props = get({}, 'props', this.constructor);
+    this.propsSettings = Object.assign({
+      nameStrategy: '',
+      strict: false,
+      throwOnStrictError: false,
+      immutable: false,
+      useGetters: true,
+      useSetters: true,
+      validators: [],
+    }, get({}, 'propsSettings', this.constructor));
 
-    const values = extractDefaultValues(schema);
-    const options = {
-      nameStrategy,
-      strict,
-      throwOnStrictError,
-      returnEmptyValue,
-      immutable,
-      useGetters,
-      useSetters,
-      validators,
-    };
+    this._values = extractDefaultValues(this.constructor.props);
 
-    this._schema = new DataWrapper(schema);
-    this._values = new DataWrapper(values);
-    this._options = new DataWrapper(options);
-
-    initGettersSetters.call(this, !!useGetters, !!useSetters);
-    initComputedProps.call(this);
+    initGettersSetters(this);
+    initComputedProps(this);
+    this._version = 1;
   }
 
   /**
@@ -141,24 +58,25 @@ class Model extends Emitter {
    * @throws Error
    */
   set(prop, value) {
-    if (this.getOption('strict', false) && !this._schema.has(prop)) {
-      if (this.getOption('throwOnStrictError', false)) {
+    if (this.propsSettings.strict && this.constructor.props[prop] == null) {
+      if (this.propsSettings.throwOnStrictError) {
         throw new Error(`There is no such prop to set. ${prop} is trying to be set with value ${value}`);
       }
       // silently ignore value
       return this;
     }
 
-    if (this._schema.getArray(`${prop}.computed`).length) {
+    if (get([], `${prop}.computed`, this.constructor.props).length) {
       throw new Error(`Can't set computed value`);
     }
 
     let oldValue = this.get(prop);
-    if (this._options.getBoolean('immutable')) {
-      return this.constructor.fromJSON(Object.assign({}, this._values.raw, { [prop]: value }));
+    if (this.propsSettings.immutable) {
+      return this.constructor.fromJSON(Object.assign({}, this._values, { [prop]: value }));
     }
 
-    this._values.setValue(prop, value);
+    this._values[prop] = value;
+    this._version += 1;
 
     this.publish(prop, value, { oldValue });
     return this;
@@ -171,12 +89,13 @@ class Model extends Emitter {
    * @param {*} [defaultValue]
    * @returns {*}
    */
-  get(prop, defaultValue) {
-    let applyFilterFn = extractFilter(this._schema.getValue(`${prop}.filter`, identityFn));
+  get (prop, defaultValue) {
+    const filter = get(identityFn, `${prop}.filter`, this.constructor.props);
+    const applyFilterFn = extractFilter(filter);
 
     return applyFilterFn(
-      this._values.getValue(prop, defaultValue),
-      this._options.getBoolean('returnEmptyValue', false),
+      get(defaultValue, prop, this._values),
+      Object.assign({}, this.propsSettings),
     );
   }
 
@@ -186,9 +105,12 @@ class Model extends Emitter {
    */
   merge(data = {}) {
     const dataKeys = Object.keys(data);
-    const source = this.getOption('strict') ? this._schema.keys : dataKeys;
+    const propsList = Object.keys(this.constructor.props);
+    const source = this.propsSettings.strict ? propsList : dataKeys;
 
-    if (this.getOption('strict') && this.getOption('throwOnStrictError') && difference(dataKeys, this._schema.keys).length) {
+    if (this.propsSettings.strict &&
+      this.propsSettings.throwOnStrictError &&
+      difference(dataKeys, propsList).length) {
       throw new Error(`Data contains attributes which were not defined in model's schema`);
     }
     const values = source.reduce((values, prop) => {
@@ -210,7 +132,7 @@ class Model extends Emitter {
    * @returns {number}
    */
   get version() {
-    return this._values.version;
+    return this._version;
   }
 
   /**
@@ -218,7 +140,7 @@ class Model extends Emitter {
    * @returns {boolean}
    */
   has(prop) {
-    return this._values.has(prop);
+    return has(prop, this._values);
   }
 
   /**
@@ -229,11 +151,11 @@ class Model extends Emitter {
    * @returns {Observable<Error[]>}
    */
   validatePropsConstraints(group = DEFAULT_GROUP) {
-    let checks = this._schema.keys
+    let checks = Object.keys(this.constructor.props)
       .map((prop) => {
-        const constraints = this._schema.getArray(`${prop}.constraints`, []);
+        const constraints = get([], `${prop}.constraints`, this.constructor.props);
 
-        const validate = this._schema.getFunction(`${prop}.validate`);
+        const validate = get(null, `${prop}.validate`, this.constructor.props);
         if (validate) {
           constraints.push(validate);
         }
@@ -252,10 +174,10 @@ class Model extends Emitter {
    */
   validateModelValidators(group = DEFAULT_GROUP) {
     const checks = mapAsserts(
-      this._options.getArray('validators'),
+      this.propsSettings.validators,
       this.toJSON(),
       undefined,
-      group
+      group,
     );
     return proceedChecks(flatten(checks));
   }
@@ -273,12 +195,12 @@ class Model extends Emitter {
       this.validateModelValidators(group),
 
       function (props = [], validators = []) {
-        return props.concat(validators)
-      }
+        return props.concat(validators);
+      },
     );
 
     if (!cb) {
-      return validate$;
+      return validate$.toPromise();
     }
 
     validate$
@@ -293,16 +215,16 @@ class Model extends Emitter {
    * @returns {{}}
    */
   toJSON({ group = DEFAULT_GROUP, customNameStrategy } = {}) {
-    const nameStrategy = customNameStrategy || this.getOption('nameStrategy');
-    let changeCaseMethod = changeCase[nameStrategy] || changeCase.camel;
+    const nameStrategy = customNameStrategy || this.propsSettings.nameStrategy;
+    let changeCaseMethod = changeCase[nameStrategy] || identityFn;
 
-    return this._schema.keys
-      .filter((prop) => !this._schema.getBoolean(`${prop}.json.hidden`, false))
+    return Object.keys(this.constructor.props)
+      .filter((prop) => !get(false, `${prop}.json.hidden`, this.constructor.props))
       .filter((prop) => {
-        let groups = this._schema.getArray(`${prop}.json.groups`);
+        let groups = get([], `${prop}.json.groups`, this.constructor.props);
 
         return (!Array.isArray(groups) || !groups.length) ||
-          (Array.isArray(groups) && (groups.indexOf(group) > -1 || group === DEFAULT_GROUP))
+          (Array.isArray(groups) && (groups.indexOf(group) > -1 || group === DEFAULT_GROUP));
       })
       .reduce((prev, curr) => {
         let val = this.get(curr);
@@ -315,32 +237,11 @@ class Model extends Emitter {
   }
 
   /**
-   * @param {string} key
-   * @param {*} value
-   * @returns {Model}
-   */
-  setOption(key, value) {
-    this._options.setValue(key, value);
-    return this;
-  }
-
-  /**
-   * @param {string} key
-   * @param {*=} defaultValue
-   * @returns {*}
-   */
-  getOption(key, defaultValue) {
-    return this._options.getValue(key, defaultValue);
-  }
-
-  /**
    * @return {Model}
    */
   clone() {
-    return this.constructor.fromJSON(this._values.raw);
+    return this.constructor.fromJSON(this._values);
   }
 }
-
-Model.DEFAULT_GROUP = DEFAULT_GROUP;
 
 export default Model;

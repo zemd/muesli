@@ -1,7 +1,7 @@
 {
   "name": "muesli",
-  "version": "2.1.5",
-  "description": "Library for managing model data",
+  "version": "3.0.0",
+  "description": "Simple, ORM-agnostic domain driven model management",
   "main": "es6/common/index.js",
   "jsnext:main": "index.js ",
   "scripts": {

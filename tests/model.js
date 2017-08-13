@@ -1,7 +1,7 @@
 'use strict';
 
 import test from 'ava';
-import BaseModel from '../';
+import BaseModel from '../index';
 import _ from 'lodash';
 import ConstraintError from '../errors/ConstraintError';
 import ValidatorError from '../errors/ValidatorError';
@@ -9,43 +9,47 @@ import required from '../constraints/required';
 import { equalPasswords } from './utils/validators';
 
 test('Default options', t => {
-  t.plan(8);
+  t.plan(7);
 
   let inst = new BaseModel();
 
-  t.false(inst.getOption('strict'));
-  t.false(inst.getOption('throwOnStrictError'));
-  t.false(inst.getOption('returnEmptyValue'));
-  t.true(inst.getOption('useGetters'));
-  t.true(inst.getOption('useSetters'));
-  t.true(Array.isArray(inst.getOption('validators')));
-  t.is(inst.getOption('validators').length, 0);
-  t.is(inst.getOption('nameStrategy'), 'camel');
+  t.false(inst.propsSettings.strict);
+  t.false(inst.propsSettings.throwOnStrictError);
+  t.true(inst.propsSettings.useGetters);
+  t.true(inst.propsSettings.useSetters);
+  t.true(Array.isArray(inst.propsSettings.validators));
+  t.is(inst.propsSettings.validators.length, 0);
+  t.is(inst.propsSettings.nameStrategy, '');
 });
 
 test('setOption/getOption', t => {
   t.plan(2);
   let inst = new BaseModel();
 
-  t.false(inst.getOption('strict'));
-  inst.setOption('strict', true);
-  t.true(inst.getOption('strict'));
+  t.false(inst.propsSettings.strict);
+  inst.propsSettings.strict = true;
+  t.true(inst.propsSettings.strict);
 });
 
 test('Setting values for properties defined in schema', t => {
   t.plan(4);
 
-  let inst = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
       filter: 'string',
     },
     lastName: {
       filter: 'string',
     },
-  });
+  };
 
-  t.is(inst.get('firstName'), '');
-  t.is(inst.get('lastName'), '');
+  const inst = new TestModel();
+
+  t.is(inst.get('firstName'), undefined);
+  t.is(inst.get('lastName'), undefined);
 
   inst.set('firstName', 'Dmytro');
   inst.set('lastName', 'Zelenetskyi');
@@ -57,40 +61,51 @@ test('Setting values for properties defined in schema', t => {
 test('Setting values for custom attributes which were not defined in schema. strict mode disabled', t => {
   t.plan(6);
 
-  let inst = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
       filter: 'string',
     },
     lastName: {
       filter: String,
     },
-  });
+  };
 
-  t.is(inst.get('firstName'), '');
-  t.is(inst.get('lastName'), '');
+  let inst = new TestModel();
+
+  t.is(inst.get('firstName'), undefined);
+  t.is(inst.get('lastName'), undefined);
 
   inst.set('lastName', 'Zelenetskyi');
   inst.set('fullName', 'Dmytro Zelenetskyi');
 
-  t.is(inst.get('firstName'), '');
+  t.is(inst.get('firstName'), undefined);
   t.is(inst.get('lastName'), 'Zelenetskyi');
   t.is(inst.get('fullName'), 'Dmytro Zelenetskyi');
-  t.is(inst.get('randomProp'), undefined, `Unknown property must be undefined`)
+  t.is(inst.get('randomProp'), undefined, `Unknown property must be undefined`);
 });
 
 test('Setting values for custom attributes which were not defined in schema. strict mode enabled and throwOnStrictError disabled', t => {
   t.plan(2);
 
-  let inst = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
       filter: 'string',
-    }
-  }, {
+    },
+  };
+  TestModel.propsSettings = {
     strict: true,
-  });
+  };
+
+  const inst = new TestModel();
 
   inst.set('firstName', 'Dmytro');
-  inst.set('lastName', 'Zelenetskiy');
+  inst.set('lastName', 'Zelenetskyi');
 
   t.is(inst.get('firstName'), 'Dmytro');
   t.is(inst.get('lastName', undefined));
@@ -99,19 +114,25 @@ test('Setting values for custom attributes which were not defined in schema. str
 test('Setting values for custom attributes which were not defined in schema. strict mode enabled and throwOnStrictError enabled', t => {
   t.plan(3);
 
-  let inst = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
       filter: 'string',
-    }
-  }, {
+    },
+  };
+  TestModel.propsSettings = {
     strict: true,
     throwOnStrictError: true,
-  });
+  };
+
+  let inst = new TestModel();
 
   inst.set('firstName', 'Dmytro');
 
   t.throws(() => {
-    inst.set('lastName', 'Zelenetskiy');
+    inst.set('lastName', 'Zelenetskyi');
   });
   t.is(inst.get('firstName'), 'Dmytro');
   t.is(inst.get('lastName'), undefined);
@@ -120,33 +141,42 @@ test('Setting values for custom attributes which were not defined in schema. str
 test('Model must return values with correct types due to their filters', t => {
   t.plan(3);
 
-  let instance = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
       filter: 'string',
-      value: 123
+      value: 123,
     },
     lastName: {
       filter: String,
-      value: true
-    }
-  });
+      value: true,
+    },
+  };
 
-  t.is(typeof instance.get('firstName'), 'string');
-  t.is(typeof instance.get('lastName'), 'string');
+  let inst = new TestModel();
 
-  instance.set('firstName', {});
-  t.is(instance.get('firstName'), '[object Object]');
+  t.is(typeof inst.get('firstName'), 'string');
+  t.is(typeof inst.get('lastName'), 'string');
+
+  inst.set('firstName', {});
+  t.is(inst.get('firstName'), '[object Object]');
 });
 
 test.cb('Validate 1 constraint with default group and fail with ConstraintError', t => {
-  t.plan(7);
+  t.plan(6);
 
-  let inst = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
       filter: 'string',
       constraints: [required()],
     },
-  });
+  };
+  let inst = new TestModel();
 
   inst.validatePropsConstraints()
     .subscribe((results) => {
@@ -155,9 +185,9 @@ test.cb('Validate 1 constraint with default group and fail with ConstraintError'
       t.is(results.length, 1);
       t.true(err instanceof ConstraintError);
       t.is(err.statusCode, 422);
-      t.is(err.propertyValue, '');
+      t.is(err.propertyValue, undefined);
       t.is(err.propertyName, 'firstName');
-      t.is(err.group, BaseModel.DEFAULT_GROUP);
+      // t.is(err.group, BaseModel.DEFAULT_GROUP);
       t.is(err.tag, 'required');
 
       t.end();
@@ -169,13 +199,18 @@ test.cb('Validate 1 constraint with default group and fail with ConstraintError'
 test.cb('Validate 1 constraint with default group and succeed', t => {
   t.plan(1);
 
-  let inst = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
       filter: 'string',
-      value: 'Dmitry',
-      constraints: [required()]
-    }
-  });
+      value: 'Dmytro',
+      constraints: [required()],
+    },
+  };
+
+  let inst = new TestModel();
 
   inst.validatePropsConstraints()
     .subscribe((results) => {
@@ -189,13 +224,17 @@ test.cb('Validate 1 constraint with default group and succeed', t => {
 test.cb('Validate 1 constraint with custom group and succeed', t => {
   t.plan(1);
 
-  let inst = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
       filter: 'string',
-      value: 'Dmitry',
-      constraints: [required(['group1'])]
-    }
-  });
+      value: 'Dmytro',
+      constraints: [required(['group1'])],
+    },
+  };
+  let inst = new TestModel();
 
   inst.validatePropsConstraints('custom')
     .subscribe((results) => {
@@ -209,12 +248,16 @@ test.cb('Validate 1 constraint with custom group and succeed', t => {
 test.cb('Validate only that constraint that was defined in argument', t => {
   t.plan(7);
 
-  let inst = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
       filter: 'string',
-      constraints: [required(['group1']), required(['group2'])]
-    }
-  });
+      constraints: [required(['group1']), required(['group2'])],
+    },
+  };
+  let inst = new TestModel();
 
   inst.validatePropsConstraints('group2')
     .subscribe((results) => {
@@ -223,7 +266,7 @@ test.cb('Validate only that constraint that was defined in argument', t => {
       t.is(results.length, 1);
       t.true(err instanceof ConstraintError);
       t.is(err.statusCode, 422);
-      t.is(err.propertyValue, '');
+      t.is(err.propertyValue, undefined);
       t.is(err.propertyName, 'firstName');
       t.is(err.group, 'group2');
       t.is(err.tag, 'required');
@@ -235,22 +278,28 @@ test.cb('Validate only that constraint that was defined in argument', t => {
 });
 
 test.cb('Validate 1 model validator with default group and fail with ValidatorError', t => {
-  t.plan(8);
+  t.plan(7);
 
-  let inst = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
       filter: String,
-      value: 'Dmitry'
+      value: 'Dmytro',
     },
     lastName: {
       filter: String,
-      value: 'Zelenetskiy'
-    }
-  }, {
+      value: 'Zelenetskyi',
+    },
+  };
+  TestModel.propsSettings = {
     validators: [
-      equalPasswords()
-    ]
-  });
+      equalPasswords(),
+    ],
+  };
+
+  let inst = new TestModel();
 
   inst.validateModelValidators()
     .subscribe((results) => {
@@ -263,7 +312,7 @@ test.cb('Validate 1 model validator with default group and fail with ValidatorEr
       t.is(err.statusCode, 422);
       t.is(err.propertyValue, undefined);
       t.is(err.propertyName, undefined);
-      t.is(err.group, BaseModel.DEFAULT_GROUP);
+      // t.is(err.group, BaseModel.DEFAULT_GROUP);
       t.is(err.tag, 'equalPasswords');
 
 
@@ -276,122 +325,125 @@ test.cb('Validate 1 model validator with default group and fail with ValidatorEr
 test('toJSON changing nameStrategy dynamically and using different groups', t => {
   t.plan(4);
 
-  let inst = new BaseModel({
+  class TestModel extends BaseModel {
+  }
+
+  TestModel.props = {
     firstName: {
-      value: 'Dmitry',
+      value: 'Dmytro',
 
       json: {
-        groups: ['group1']
-      }
+        groups: ['group1'],
+      },
     },
     lastName: {
-      value: 'Zelenetskiy',
+      value: 'Zelenetskyi',
 
       json: {
-        hidden: true
-      }
+        hidden: true,
+      },
     },
     age: {
       filter: 'integer',
       value: 10,
 
       json: {
-        groups: ['group2']
-      }
-    }
-  });
+        groups: ['group2'],
+      },
+    },
+  };
+  let inst = new TestModel();
 
-  t.deepEqual(inst.toJSON(), { firstName: 'Dmitry', age: 10 });
-  inst.setOption('nameStrategy', 'snake');
-  t.deepEqual(inst.toJSON(), { first_name: 'Dmitry', age: 10 });
+  t.deepEqual(inst.toJSON(), { firstName: 'Dmytro', age: 10 });
+  inst.propsSettings.nameStrategy = 'snake';
+  t.deepEqual(inst.toJSON(), { first_name: 'Dmytro', age: 10 });
 
-  inst.setOption('nameStrategy', 'camel');
-  t.deepEqual(inst.toJSON({group: 'group1'}), { firstName: 'Dmitry' });
-  t.deepEqual(inst.toJSON({group: 'group2'}), { age: 10 });
+  inst.propsSettings.nameStrategy = 'camel';
+  t.deepEqual(inst.toJSON({ group: 'group1' }), { firstName: 'Dmytro' });
+  t.deepEqual(inst.toJSON({ group: 'group2' }), { age: 10 });
 });
 
 test('fromJSON creates valid Model object in non strict mode', t => {
   t.plan(3);
 
-  class MyModel extends BaseModel {
-    constructor() {
-      super({
-        firstName: {
-          filter: String,
-          constraints: [required()]
-        },
-        lastName: {
-          filter: String
-        }
-      })
-    }
+  class TestModel extends BaseModel {
   }
 
-  const inst = MyModel.fromJSON({
-    firstName: 'Dmitry',
-    lastName: 'Zelenetskiy',
-    age: 30
+  TestModel.props = {
+    firstName: {
+      filter: String,
+      constraints: [required()],
+    },
+    lastName: {
+      filter: String,
+    },
+  };
+
+  const inst = TestModel.fromJSON({
+    firstName: 'Dmytro',
+    lastName: 'Zelenetskyi',
+    age: 30,
   });
 
-  t.is(inst.get('firstName'), 'Dmitry');
-  t.is(inst.get('lastName'), 'Zelenetskiy');
+  t.is(inst.get('firstName'), 'Dmytro');
+  t.is(inst.get('lastName'), 'Zelenetskyi');
   t.is(inst.get('age'), 30);
 });
 
 test('fromJSON creates valid Model object with skipping invalid props in strict mode', t => {
   t.plan(3);
 
-  class MyModel extends BaseModel {
-    constructor() {
-      super({
-        firstName: {
-          filter: String,
-          constraints: [required()]
-        },
-        lastName: {
-          filter: String
-        }
-      }, {
-        strict: true
-      })
-    }
+  class TestModel extends BaseModel {
   }
 
-  const inst = MyModel.fromJSON({
-    firstName: 'Dmitry',
-    lastName: 'Zelenetskiy',
-    age: 30
+  TestModel.props = {
+    firstName: {
+      filter: String,
+      constraints: [required()],
+    },
+    lastName: {
+      filter: String,
+    },
+  };
+  TestModel.propsSettings = {
+    strict: true,
+  };
+
+  const inst = TestModel.fromJSON({
+    firstName: 'Dmytro',
+    lastName: 'Zelenetskyi',
+    age: 30,
   });
 
-  t.is(inst.get('firstName'), 'Dmitry');
-  t.is(inst.get('lastName'), 'Zelenetskiy');
+  t.is(inst.get('firstName'), 'Dmytro');
+  t.is(inst.get('lastName'), 'Zelenetskyi');
   t.is(inst.get('age'), undefined);
 });
 
 test('fromJSON throws an error when Model configured with strict mode and throwOnStrictError enabled', t => {
   t.plan(1);
 
-  class MyModel extends BaseModel {
-    constructor() {
-      super({
-        firstName: {
-          filter: String,
-          constraints: [required()],
-        },
-        lastName: {
-          filter: String,
-        },
-      }, {
-        strict: true,
-        throwOnStrictError: true,
-      });
-    }
+  class TestModel extends BaseModel {
   }
 
+  TestModel.props = {
+    firstName: {
+      filter: String,
+      constraints: [required()],
+    },
+    lastName: {
+      filter: String,
+    },
+  };
+  TestModel.propsSettings = {
+    strict: true,
+    throwOnStrictError: true,
+  };
+
   t.throws(function () {
-    MyModel.fromJSON({
-      firstName: 'Dmitry',
-      lastName: 'Zelenetskiy',
+    TestModel.fromJSON({
+      firstName: 'Dmytro',
+      lastName: 'Zelenetskyi',
       age: 30,
     });
   });
@@ -400,36 +452,39 @@ test('fromJSON throws an error when Model configured with strict mode and throwO
 test('Computed properties', t => {
   t.plan(6);
 
-  const inst = new BaseModel({
+  class TestModel extends BaseModel {}
+  TestModel.props = {
     firstName: {
       filter: String,
-      value: 'Dmitry',
+      value: 'Dmytro',
     },
     lastName: {
       filter: String,
     },
     fullName: {
       filter: function (deps = []) {
-        return deps.join(' ')
+        return deps.join(' ');
       },
-      computed: ['firstName', 'lastName']
+      computed: ['firstName', 'lastName'],
     },
-  });
+  };
 
-  t.is(inst.get('firstName'), 'Dmitry');
-  t.is(inst.get('lastName'), '');
-  t.is(inst.get('fullName'), 'Dmitry ');
+  const inst = new TestModel();
 
-  inst.set('lastName', 'Zelenetskiy');
+  t.is(inst.get('firstName'), 'Dmytro');
+  t.is(inst.get('lastName'), undefined);
+  t.is(inst.get('fullName'), 'Dmytro ');
 
-  t.is(inst.get('fullName'), 'Dmitry Zelenetskiy');
+  inst.set('lastName', 'Zelenetskyi');
 
-  inst.set('lastName', 'Zelenetskiy2');
-  t.is(inst.get('fullName'), 'Dmitry Zelenetskiy2');
+  t.is(inst.get('fullName'), 'Dmytro Zelenetskyi');
+
+  inst.set('lastName', 'Zelenetskyi2');
+  t.is(inst.get('fullName'), 'Dmytro Zelenetskyi2');
 
   t.throws(function () {
     inst.set('fullName', 'Bill Gates');
-  })
+  });
 });
 
 // test('Immutable model', t => {
@@ -451,53 +506,50 @@ test('Computed properties', t => {
 //     }
 //   }
 //
-//   const inst = Author.fromJSON({ firstName: 'Dmitry' });
-//   const newInst = inst.set('lastName', 'Zelenetskiy');
+//   const inst = Author.fromJSON({ firstName: 'Dmytro' });
+//   const newInst = inst.set('lastName', 'Zelenetskyi');
 //
 //   t.true(inst.getOption('immutable'));
 //   t.true(newInst.getOption('immutable'));
 //
-//   t.is(inst.get('firstName'), 'Dmitry');
+//   t.is(inst.get('firstName'), 'Dmytro');
 //   t.is(inst.get('lastName'), '');
 //
 //   t.false(newInst === inst);
 //   t.true(inst instanceof Author);
 //   t.true(newInst instanceof Author);
 //
-//   t.is(newInst.get('firstName'), 'Dmitry');
-//   t.is(newInst.get('lastName'), 'Zelenetskiy');
+//   t.is(newInst.get('firstName'), 'Dmytro');
+//   t.is(newInst.get('lastName'), 'Zelenetskyi');
 // });
 
-test('provideGetters and provideSetters', t => {
+test('useGetters and useSetters', t => {
   t.plan(4);
 
-  class Author extends BaseModel {
-    constructor() {
-      super({
-        firstName: {
-          filter: String,
-          value: 'Default Name'
-        },
-        lastName: {
-          filter: String,
-        },
-        fullName: {
-          filter: function (deps = []) {
-            return deps.join(' ');
-          },
-          computed: ['firstName', 'lastName']
-        },
-      });
-    }
-  }
+  class TestModel extends BaseModel {}
+  TestModel.props = {
+    firstName: {
+      filter: String,
+      value: 'Default Name',
+    },
+    lastName: {
+      filter: String,
+    },
+    fullName: {
+      filter: function (deps = []) {
+        return deps.join(' ');
+      },
+      computed: ['firstName', 'lastName'],
+    },
+  };
 
-  const inst = Author.fromJSON({ firstName: 'Dmitry' });
-  t.is(inst.values.firstName, 'Dmitry');
+  const inst = TestModel.fromJSON({ firstName: 'Dmytro' });
+  t.is(inst.values.firstName, 'Dmytro');
 
-  inst.values.lastName = 'Zelenetskiy';
-  t.is(inst.values.lastName, 'Zelenetskiy');
+  inst.values.lastName = 'Zelenetskyi';
+  t.is(inst.values.lastName, 'Zelenetskyi');
 
-  t.is(inst.values.fullName, 'Dmitry Zelenetskiy');
+  t.is(inst.values.fullName, 'Dmytro Zelenetskyi');
   t.throws(() => {
     inst.values.fullName = 'Custom Name';
   });
@@ -506,56 +558,49 @@ test('provideGetters and provideSetters', t => {
 test('version', t => {
   t.plan(2);
 
-  class Author extends BaseModel {
-    constructor() {
-      super({
-        firstName: {
-          filter: String,
-          value: 'Default Name',
-        },
-        lastName: {
-          filter: String,
-        },
-      });
-    }
-  }
+  class TestModel extends BaseModel {}
+  TestModel.props = {
+    firstName: {
+      filter: String,
+      value: 'Default Name',
+    },
+    lastName: {
+      filter: String,
+    },
+  };
 
-  const inst = Author.fromJSON({ firstName: 'Dmitry' });
+  const inst = TestModel.fromJSON({ firstName: 'Dmytro' });
   let version = inst.version;
   t.true(inst.version > 0);
 
-  inst.set('lastName', 'Zelenetskiy');
+  inst.set('lastName', 'Zelenetskyi');
   t.is(inst.version, ++version);
 });
 
 test('toJSON with nested models', t => {
   class FirstName extends BaseModel {
-    constructor() {
-      super({
-        firstName: {
-          filter: String,
-          value: 'Dmitry',
-        },
-      });
-    }
   }
+  FirstName.props = {
+    firstName: {
+      filter: String,
+      value: 'Dmytro',
+    },
+  };
 
   class Author extends BaseModel {
-    constructor() {
-      super({
-        firstName: {
-          filter: (v) => FirstName.fromJSON(v),
-        },
-        lastName: {
-          filter: String,
-          value: 'Zelenetskiy',
-        },
-      });
-    }
   }
+  Author.props = {
+    firstName: {
+      filter: (v) => FirstName.fromJSON(v),
+    },
+    lastName: {
+      filter: String,
+      value: 'Zelenetskyi',
+    },
+  };
 
   const inst = new Author();
   const json = inst.toJSON();
 
-  t.deepEqual(json, { lastName: 'Zelenetskiy', firstName: { firstName: 'Dmitry' } });
+  t.deepEqual(json, { lastName: 'Zelenetskyi', firstName: { firstName: 'Dmytro' } });
 });
