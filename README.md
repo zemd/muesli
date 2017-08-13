@@ -91,11 +91,11 @@ Book.propsSettings = {
 
 | Setting name | Default value | Possible values | Description |
 |---|---|---|---|
-| nameStrategy | `<empty string>`  | `(camel|pascal|title|snake|lower|upper|constant)` | Props names' serialization strategy. Look inside package https://www.npmjs.com/package/change-case |
+| nameStrategy | `<empty string>`  | `(camel OR pascal OR title OR snake OR lower OR upper OR constant)` | Props names' serialization strategy. Look inside package https://www.npmjs.com/package/change-case |
 | strict | `false` | `true|false` | if `true` is set, then model won't accept non schema props. |
-| throwOnStrictError | `false` | `true|false` | if `true` is set and `strict === true`, model will throw an error when model tries to set non schema prop |
-| provideGetters | `true` | `true|false` | gives direct access to props values via `model.values` object |
-| provideSetters | `true` | `true|false` | |
+| throwOnStrictError | `false` | `true OR false` | if `true` is set and `strict === true`, model will throw an error when model tries to set non schema prop |
+| provideGetters | `true` | `true OR false` | gives direct access to props values via `model.values` object |
+| provideSetters | `true` | `true OR false` | |
 | validators | `[]` | | array of model validators that can validate through whole model |
 
 ### Model validation
