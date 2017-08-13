@@ -23,7 +23,7 @@ or
 yarn add muesli
 ```
 
-### Optional packages
+### Optional packages(in TODO)
 
 ```bash
 npm install muesli-filters
@@ -48,7 +48,7 @@ class Book extends Model {
   
 }
 Book.props = {
-  ISDN: {
+  ISBN: {
     filter: 'string',
     value: '',
     constraints: [],
@@ -79,8 +79,8 @@ Book.propsSettings = {
   strict: false, // if true is set, then model won't accept non schema attributes. It won't throw an error
   throwOnStrictError: false, // if true it will throw an error when `strict` is true and you are trying to set non schema attribute
   
-  provideGetters: true, // default to true -- give access to direct access to props via model.values object
-  provideSetters: true, // default to true
+  useGetters: true, // default to true -- give access to direct access to props via model.values object
+  useSetters: true, // default to true
 
   validators: [ // model validators that can validate all object's values
     MuesliValidators.equalProps(['password', 'password-confirmation'], ['validation-group1']),
@@ -94,14 +94,14 @@ Book.propsSettings = {
 | nameStrategy | `<empty string>`  | `(camel OR pascal OR title OR snake OR lower OR upper OR constant)` | Props names' serialization strategy. Look inside package https://www.npmjs.com/package/change-case |
 | strict | `false` | `true OR false` | if `true` is set, then model won't accept non schema props. |
 | throwOnStrictError | `false` | `true OR false` | if `true` is set and `strict === true`, model will throw an error when model tries to set non schema prop |
-| provideGetters | `true` | `true OR false` | gives direct access to props values via `model.values` object |
-| provideSetters | `true` | `true OR false` | |
+| useGetters | `true` | `true OR false` | gives direct access to props values via `model.values` object |
+| useSetters | `true` | `true OR false` | |
 | validators | `[]` | | array of model validators that can validate through whole model |
 
 ### Model validation
 
 ```js
-const book = Book.fromJSON({ ISDN: '1232412-123' });
+const book = Book.fromJSON({ ISBN: '1232412-123' });
 
 book.validate()
   .then((validationErrors) => {
@@ -120,7 +120,7 @@ book.validate()
 There is static method to make the same operation quicker
 
 ```js
-Book.validate({ ISDN: '12345123-123' })
+Book.validate({ ISBN: '12345123-123' })
   .then((validationErrors) => {
     if (validationErrors.length) {
       // Model doesn't pass validation constraints
@@ -241,9 +241,9 @@ console.log(horror.toJSON());
 // outputs `{ name: "Stephen", lastName: "King" }`
 ```
 
-### Using `provideGetters` and `provideSetters` options
+### Using `useGetters` and `useSetters` options
 
-if `provideGetters` or/and `provideSetters` options are set to `true`, 
+if `useGetters` or/and `useSetters` options are set to `true`, 
 then you can use props' values directly via `model.values` object.
 
 Example:
@@ -260,8 +260,8 @@ Author.props = {
  },
 };
 Author.propsSettings = {
-  provideGetters: true,
-  provideSetters: true,
+  useGetters: true,
+  useSetters: true,
 };
 
 const model = new Author();
