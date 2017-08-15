@@ -9,38 +9,28 @@ import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/filter';
 import 'rxjs/add/operator/map';
 import runAsync from 'run-async';
-import ValidationError from './errors/ValidationError';
-import FILTERS from './src/filters';
+import FILTERS from './filters/index';
 
 const DEFAULT_GROUP = 'default';
 
 export { DEFAULT_GROUP };
 
-function filterFunctionGroup(group) {
-  return function (f) {
-    return !f.groups ||
-      (Array.isArray(f.groups) && (f.groups.indexOf(group) > -1) || !f.groups.length) ||
-      group === DEFAULT_GROUP;
-  }
-}
-
 export const mapAsserts = function (constraints, checkValue, propName, group = DEFAULT_GROUP) {
   return constraints
     .filter((constraint) => typeof constraint === 'function')
-    .filter(filterFunctionGroup(group))
     .map((constraint) => {
-      return Observable.fromPromise(runAsync(constraint)(checkValue))
+      return Observable.fromPromise(runAsync(constraint)(checkValue, propName, group))
         .catch((err) => {
-          if (err instanceof ValidationError) {
-            err.propertyName = propName;
+          if ('propName' in err || 'props' in err) {
             err.group = group;
-
+            if (!err.statusCode) {
+              err.statusCode = 422;
+            }
             return Observable.of(err);
           }
           return Observable.throw(err);
         });
     });
-
 };
 
 /**

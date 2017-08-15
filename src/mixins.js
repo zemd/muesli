@@ -4,6 +4,7 @@ import has from 'lodash/fp/has';
 import get from 'lodash/fp/getOr'; // getOr(defaultValue, path, object)
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/combineLatest';
+import 'rxjs/add/operator/startWith';
 
 export const initGettersSetters = (model) => {
   const keys = Object.keys(model.constructor.props);

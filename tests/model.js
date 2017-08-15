@@ -1,12 +1,21 @@
 'use strict';
 
 import test from 'ava';
-import BaseModel from '../index';
+import BaseModel from '../src/model';
 import _ from 'lodash';
 import ConstraintError from '../errors/ConstraintError';
-import ValidatorError from '../errors/ValidatorError';
-import required from '../constraints/required';
 import { equalPasswords } from './utils/validators';
+
+const required = (groups = []) => {
+  return (propValue, propName, currentGroup) => {
+    if (currentGroup && groups.length > 0 && groups.includes(currentGroup)) {
+      return;
+    }
+    if (propValue == null) {
+      throw new ConstraintError(propName, propValue, `${propName} is required property`);
+    }
+  };
+};
 
 test('Default options', t => {
   t.plan(7);
@@ -165,7 +174,7 @@ test('Model must return values with correct types due to their filters', t => {
 });
 
 test.cb('Validate 1 constraint with default group and fail with ConstraintError', t => {
-  t.plan(6);
+  t.plan(5);
 
   class TestModel extends BaseModel {
   }
@@ -183,12 +192,11 @@ test.cb('Validate 1 constraint with default group and fail with ConstraintError'
       let err = _.head(results);
 
       t.is(results.length, 1);
-      t.true(err instanceof ConstraintError);
+      t.true('propName' in err);
       t.is(err.statusCode, 422);
-      t.is(err.propertyValue, undefined);
-      t.is(err.propertyName, 'firstName');
+      t.is(err.propValue, undefined);
+      t.is(err.propName, 'firstName');
       // t.is(err.group, BaseModel.DEFAULT_GROUP);
-      t.is(err.tag, 'required');
 
       t.end();
     }, (err) => {
@@ -246,7 +254,7 @@ test.cb('Validate 1 constraint with custom group and succeed', t => {
 });
 
 test.cb('Validate only that constraint that was defined in argument', t => {
-  t.plan(7);
+  t.plan(6);
 
   class TestModel extends BaseModel {
   }
@@ -264,12 +272,11 @@ test.cb('Validate only that constraint that was defined in argument', t => {
       let err = _.head(results);
 
       t.is(results.length, 1);
-      t.true(err instanceof ConstraintError);
+      t.true('propName' in err);
       t.is(err.statusCode, 422);
-      t.is(err.propertyValue, undefined);
-      t.is(err.propertyName, 'firstName');
+      t.is(err.propValue, undefined);
+      t.is(err.propName, 'firstName');
       t.is(err.group, 'group2');
-      t.is(err.tag, 'required');
 
       t.end();
     }, (err) => {
@@ -278,7 +285,7 @@ test.cb('Validate only that constraint that was defined in argument', t => {
 });
 
 test.cb('Validate 1 model validator with default group and fail with ValidatorError', t => {
-  t.plan(7);
+  t.plan(6);
 
   class TestModel extends BaseModel {
   }
@@ -308,13 +315,11 @@ test.cb('Validate 1 model validator with default group and fail with ValidatorEr
       t.true(Array.isArray(results));
       t.is(results.length, 1);
 
-      t.true(err instanceof ValidatorError);
+      t.true('props' in err);
       t.is(err.statusCode, 422);
-      t.is(err.propertyValue, undefined);
-      t.is(err.propertyName, undefined);
+      t.is(err.propValue, undefined);
+      t.is(err.propName, undefined);
       // t.is(err.group, BaseModel.DEFAULT_GROUP);
-      t.is(err.tag, 'equalPasswords');
-
 
       t.end();
     }, (err) => {

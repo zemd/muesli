@@ -9,7 +9,6 @@
 [![CircleCI](https://circleci.com/gh/zemd/muesli/tree/master.svg?style=svg)](https://circleci.com/gh/zemd/muesli/tree/master)
 [![dependencies:?](https://img.shields.io/david/zemd/muesli.svg)](https://david-dm.org/zemd/muesli)
 [![devDependencies:?](https://img.shields.io/david/dev/zemd/muesli.svg?style=flat)](https://david-dm.org/zemd/muesli)
-[![Inline docs](http://inch-ci.org/github/zemd/muesli.svg?branch=master)](http://inch-ci.org/github/zemd/muesli)
 
 ## Installation
 
@@ -91,11 +90,11 @@ Book.propsSettings = {
 
 | Setting name | Default value | Possible values | Description |
 |---|---|---|---|
-| nameStrategy | `<empty string>`  | `(camel OR pascal OR title OR snake OR lower OR upper OR constant)` | Props names' serialization strategy. Look inside package https://www.npmjs.com/package/change-case |
-| strict | `false` | `true OR false` | if `true` is set, then model won't accept non schema props. |
-| throwOnStrictError | `false` | `true OR false` | if `true` is set and `strict === true`, model will throw an error when model tries to set non schema prop |
-| useGetters | `true` | `true OR false` | gives direct access to props values via `model.values` object |
-| useSetters | `true` | `true OR false` | |
+| nameStrategy | `<empty string>`  | (`camel` OR `pascal` OR `title` OR `snake` OR `lower` OR `upper` OR `constant`) | Props names' serialization strategy. Look inside package https://www.npmjs.com/package/change-case |
+| strict | `false` | `true` OR `false` | if `true` is set, then model won't accept non schema props. |
+| throwOnStrictError | `false` | `true` OR `false` | if `true` is set and `strict === true`, model will throw an error when model tries to set non schema prop |
+| useGetters | `true` | `true` OR `false` | gives direct access to props values via `model.values` object |
+| useSetters | `true` | `true` OR `false` | |
 | validators | `[]` | | array of model validators that can validate through whole model |
 
 ### Model validation

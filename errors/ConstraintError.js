@@ -1,11 +1,10 @@
 'use strict';
 
-import ValidationError from './ValidationError';
+export default class ConstraintError extends Error {
+  constructor(propName, propValue, message) {
+    super(message);
 
-export default class ConstraintError extends ValidationError {
-  constructor(value, tag) {
-    super(tag);
-
-    this.propertyValue = value;
+    this.propName = propName;
+    this.propValue = propValue;
   }
 }

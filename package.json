@@ -2,8 +2,8 @@
   "name": "muesli",
   "version": "3.0.0",
   "description": "Simple, ORM-agnostic domain driven model management",
-  "main": "es6/common/index.js",
-  "jsnext:main": "index.js ",
+  "main": "es6/common/model.js",
+  "jsnext:main": "src/model.js ",
   "scripts": {
     "test": "NODE_ENV=test ava --verbose",
     "es5-umd": "rollem -c rollup.config.browser.es5.js",
@@ -21,21 +21,32 @@
     "url": "https://github.com/zemd/muesli/issues"
   },
   "homepage": "https://github.com/zemd/muesli",
+  "keywords": [
+    "muesli",
+    "DDD",
+    "observable",
+    "model",
+    "frp",
+    "domain driven model",
+    "functional-reactive-programming",
+    "state management",
+    "data flow"
+  ],
   "dependencies": {
     "change-case": "^3.0.1",
     "lodash": "^4.17.4",
     "run-async": "^2.3.0",
     "rx-emitter": "^2.1.0",
-    "rxjs": "^5.4.2"
+    "rxjs": "^5.4.3"
   },
   "devDependencies": {
     "ava": "^0.21.0",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-es2015": "^6.24.1",
     "rollem": "^1.12.0",
-    "rollup": "^0.47.1",
-    "rollup-plugin-babel": "^3.0.0",
-    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup": "^0.47.4",
+    "rollup-plugin-babel": "^3.0.1",
+    "rollup-plugin-commonjs": "^8.1.0",
     "rollup-plugin-node-resolve": "^3.0.0"
   },
   "ava": {
@@ -45,11 +56,8 @@
     ],
     "sources": [
       "src/**/*.js",
-      "constraints/**/*.js",
       "errors/**/*.js",
-      "filters/**/*.js",
-      "index.js",
-      "utils.js"
+      "index.js"
     ],
     "require": [
       "babel-register"

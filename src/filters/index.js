@@ -1,10 +1,10 @@
 'use strict';
 
-import StringFilter from '../filters/string';
-import NumberFilter from '../filters/number';
-import IntegerFilter from '../filters/integer';
-import ArrayFilter from '../filters/array';
-import BooleanFilter from '../filters/boolean';
+import StringFilter from './string';
+import NumberFilter from './number';
+import IntegerFilter from './integer';
+import ArrayFilter from './array';
+import BooleanFilter from './boolean';
 
 export default {
   string: StringFilter,

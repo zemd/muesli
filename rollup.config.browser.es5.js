@@ -5,8 +5,8 @@ const nodeResolve = require('rollup-plugin-node-resolve');
 const commonjs = require('rollup-plugin-commonjs');
 
 export default [{
-  entry: './index.js',
-  dest: './es5/umd/index.js',
+  entry: './src/model.js',
+  dest: './es5/umd/model.js',
   format: 'umd',
   external: [
     'rxjs/Observable',
@@ -25,6 +25,7 @@ export default [{
     'lodash/fp/difference',
     'lodash/fp/toSafeInteger',
     'lodash/fp/get',
+    'lodash/fp/getOr',
     'lodash/fp/has',
     'lodash/fp/set',
     'lodash/fp/cloneDeep',
@@ -77,159 +78,13 @@ export default [{
     }),
   ],
 }, {
-  entry: './errors/ValidationError.js',
-  dest: './es5/umd/errors/ValidationError.js',
+  entry: './errors/ValidateError.js',
+  dest: './es5/umd/errors/ValidateError.js',
   format: 'umd',
   external: [],
   globals: {},
   interop: false,
-  moduleName: 'ValidationError',
-  plugins: [
-    nodeResolve({
-      module: true,
-      jsnext: true,
-      main: true,
-    }),
-    commonjs(),
-    babel({
-      presets: [
-        ['es2015', { modules: false }],
-      ],
-      plugins: [
-        'external-helpers',
-      ],
-    }),
-  ],
-}, {
-  entry: './errors/ValidatorError.js',
-  dest: './es5/umd/errors/ValidatorError.js',
-  format: 'umd',
-  external: [],
-  globals: {},
-  interop: false,
-  moduleName: 'ValidatorError',
-  plugins: [
-    nodeResolve({
-      module: true,
-      jsnext: true,
-      main: true,
-    }),
-    commonjs(),
-    babel({
-      presets: [
-        ['es2015', { modules: false }],
-      ],
-      plugins: [
-        'external-helpers',
-      ],
-    }),
-  ],
-}, {
-  entry: './filters/array.js',
-  dest: './es5/umd/filters/array.js',
-  format: 'umd',
-  external: [],
-  globals: {},
-  interop: false,
-  moduleName: 'array',
-  plugins: [
-    nodeResolve({
-      module: true,
-      jsnext: true,
-      main: true,
-    }),
-    commonjs(),
-    babel({
-      presets: [
-        ['es2015', { modules: false }],
-      ],
-      plugins: [
-        'external-helpers',
-      ],
-    }),
-  ],
-}, {
-  entry: './filters/boolean.js',
-  dest: './es5/umd/filters/boolean.js',
-  format: 'umd',
-  external: [],
-  globals: {},
-  interop: false,
-  moduleName: 'boolean',
-  plugins: [
-    nodeResolve({
-      module: true,
-      jsnext: true,
-      main: true,
-    }),
-    commonjs(),
-    babel({
-      presets: [
-        ['es2015', { modules: false }],
-      ],
-      plugins: [
-        'external-helpers',
-      ],
-    }),
-  ],
-}, {
-  entry: './filters/integer.js',
-  dest: './es5/umd/filters/integer.js',
-  format: 'umd',
-  external: [
-    'lodash/fp/toSafeInteger',
-  ],
-  globals: {},
-  interop: false,
-  moduleName: 'integer',
-  plugins: [
-    nodeResolve({
-      module: true,
-      jsnext: true,
-      main: true,
-    }),
-    commonjs(),
-    babel({
-      presets: [
-        ['es2015', { modules: false }],
-      ],
-      plugins: [
-        'external-helpers',
-      ],
-    }),
-  ],
-}, {
-  entry: './filters/number.js',
-  dest: './es5/umd/filters/number.js',
-  format: 'umd',
-  external: [],
-  globals: {},
-  interop: false,
-  moduleName: 'number',
-  plugins: [
-    nodeResolve({
-      module: true,
-      jsnext: true,
-      main: true,
-    }),
-    commonjs(),
-    babel({
-      presets: [
-        ['es2015', { modules: false }],
-      ],
-      plugins: [
-        'external-helpers',
-      ],
-    }),
-  ],
-}, {
-  entry: './filters/string.js',
-  dest: './es5/umd/filters/string.js',
-  format: 'umd',
-  external: [],
-  globals: {},
-  interop: false,
-  moduleName: 'string',
+  moduleName: 'ValidateError',
   plugins: [
     nodeResolve({
       module: true,

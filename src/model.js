@@ -1,9 +1,7 @@
 'use strict';
 
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/combineLatest';
 import 'rxjs/add/observable/forkJoin';
-import 'rxjs/add/operator/startWith';
 import changeCase from 'change-case';
 import flatten from 'lodash/fp/flatten';
 import difference from 'lodash/fp/difference';
@@ -11,7 +9,7 @@ import Emitter from 'rx-emitter';
 import { extractDefaultValues, extractFilter, proceedChecks, mapAsserts, DEFAULT_GROUP } from './utils';
 import has from 'lodash/fp/has';
 import get from 'lodash/fp/getOr'; // getOr(defaultValue, path, object)
-import { initComputedProps, initGettersSetters } from './src/mixins';
+import { initComputedProps, initGettersSetters } from './mixins';
 
 const identityFn = (v) => v;
 
@@ -187,7 +185,7 @@ class Model extends Emitter {
    *
    * @param {string} group
    * @param {function} cb
-   * @returns {Observable<T[]>}
+   * @returns {Promise<T[]>}
    */
   validate(group = DEFAULT_GROUP, cb) {
     const validate$ = Observable.forkJoin(
