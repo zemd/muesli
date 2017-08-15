@@ -1,6 +1,6 @@
 {
   "name": "muesli",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Simple, ORM-agnostic domain driven model management",
   "main": "es6/common/model.js",
   "jsnext:main": "src/model.js ",
@@ -24,11 +24,10 @@
   "keywords": [
     "muesli",
     "DDD",
+    "orm agnostic",
     "observable",
     "model",
-    "frp",
     "domain driven model",
-    "functional-reactive-programming",
     "state management",
     "data flow"
   ],
@@ -45,7 +44,7 @@
     "babel-preset-es2015": "^6.24.1",
     "rollem": "^1.12.0",
     "rollup": "^0.47.4",
-    "rollup-plugin-babel": "^3.0.1",
+    "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-commonjs": "^8.1.0",
     "rollup-plugin-node-resolve": "^3.0.0"
   },
