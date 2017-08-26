@@ -22,14 +22,6 @@ or
 yarn add muesli
 ```
 
-### Optional packages(in TODO)
-
-```bash
-npm install muesli-filters
-npm install muesli-validators
-npm install muesli-constraints
-```
-
 ## Usage
 
 ### Import `Model` class from `muesli` package.
