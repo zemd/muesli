@@ -1,22 +1,20 @@
 'use strict';
 
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/forkJoin';
 import changeCase from 'change-case';
-import flatten from 'lodash/fp/flatten';
 import difference from 'lodash/fp/difference';
 import Emitter from 'rx-emitter';
-import { extractDefaultValues, extractFilter, proceedChecks, mapAsserts, DEFAULT_GROUP } from './utils';
+import { extractDefaultValues, extractFilter, filterConstraints, DEFAULT_GROUP } from './utils';
 import has from 'lodash/fp/has';
 import get from 'lodash/fp/getOr'; // getOr(defaultValue, path, object)
 import { initComputedProps, initGettersSetters } from './mixins';
+import { validate, normalizeConstraintsMap } from './validate';
 
 const identityFn = (v) => v;
 
 class Model extends Emitter {
   constructor() {
     super();
-    this.constructor.props = get({}, 'props', this.constructor);
+    this.props = get({}, 'props', this.constructor);
     this.propsSettings = Object.assign({
       nameStrategy: '',
       strict: false,
@@ -27,7 +25,7 @@ class Model extends Emitter {
       validators: [],
     }, get({}, 'propsSettings', this.constructor));
 
-    this._values = extractDefaultValues(this.constructor.props);
+    this._values = extractDefaultValues(this.props);
 
     initGettersSetters(this);
     initComputedProps(this);
@@ -56,7 +54,7 @@ class Model extends Emitter {
    * @throws Error
    */
   set(prop, value) {
-    if (this.propsSettings.strict && this.constructor.props[prop] == null) {
+    if (this.propsSettings.strict && this.props[prop] == null) {
       if (this.propsSettings.throwOnStrictError) {
         throw new Error(`There is no such prop to set. ${prop} is trying to be set with value ${value}`);
       }
@@ -64,7 +62,7 @@ class Model extends Emitter {
       return this;
     }
 
-    if (get([], `${prop}.computed`, this.constructor.props).length) {
+    if (get([], `${prop}.computed`, this.props).length) {
       throw new Error(`Can't set computed value`);
     }
 
@@ -87,8 +85,8 @@ class Model extends Emitter {
    * @param {*} [defaultValue]
    * @returns {*}
    */
-  get (prop, defaultValue) {
-    const filter = get(identityFn, `${prop}.filter`, this.constructor.props);
+  get(prop, defaultValue) {
+    const filter = get(identityFn, `${prop}.filter`, this.props);
     const applyFilterFn = extractFilter(filter);
 
     return applyFilterFn(
@@ -103,7 +101,7 @@ class Model extends Emitter {
    */
   merge(data = {}) {
     const dataKeys = Object.keys(data);
-    const propsList = Object.keys(this.constructor.props);
+    const propsList = Object.keys(this.props);
     const source = this.propsSettings.strict ? propsList : dataKeys;
 
     if (this.propsSettings.strict &&
@@ -142,67 +140,46 @@ class Model extends Emitter {
   }
 
   /**
-   * You can override this function to add specific implementation for checking props' constraints.
-   * Must return Observable<Error[]>
-   *
-   * @param {string} group
-   * @returns {Observable<Error[]>}
-   */
-  validatePropsConstraints(group = DEFAULT_GROUP) {
-    let checks = Object.keys(this.constructor.props)
-      .map((prop) => {
-        const constraints = get([], `${prop}.constraints`, this.constructor.props);
-
-        const validate = get(null, `${prop}.validate`, this.constructor.props);
-        if (validate) {
-          constraints.push(validate);
-        }
-
-        return mapAsserts(constraints, this.get(prop), prop, group);
-      });
-    return proceedChecks(flatten(checks));
-  }
-
-  /**
-   * You can override this function to add specific implementation for checking model's validators.
-   * Must return Observable<Error[]>
-   *
-   * @param {string} group
-   * @returns {Observable<Error[]>}
-   */
-  validateModelValidators(group = DEFAULT_GROUP) {
-    const checks = mapAsserts(
-      this.propsSettings.validators,
-      this.toJSON(),
-      undefined,
-      group,
-    );
-    return proceedChecks(flatten(checks));
-  }
-
-  /**
    * Main function to validate model with each props' constraints and model's validators
    *
-   * @param {string} group
-   * @param {function} cb
+   * @param {string=} group
+   * @param {function=} cb
    * @returns {Promise<T[]>}
    */
-  validate(group = DEFAULT_GROUP, cb) {
-    const validate$ = Observable.forkJoin(
-      this.validatePropsConstraints(group),
-      this.validateModelValidators(group),
+  validate(group, cb) {
+    const propsConstraints = filterConstraints(normalizeConstraintsMap(this.props), group);
 
-      function (props = [], validators = []) {
-        return props.concat(validators);
-      },
-    );
+    const [...constraints] = Object.keys(propsConstraints)
+      .map((prop) => {
+        return validate(propsConstraints[prop], this.get(prop), prop);
+      });
 
-    if (!cb) {
-      return validate$.toPromise();
-    }
+    const validators = validate(this.propsSettings.validators, this.toJSON({ group }));
 
-    validate$
-      .subscribe((res) => cb(null, res), cb);
+    return Promise.all(
+      validators
+        .concat(...constraints)
+    )
+      .then((errors) => {
+        return errors
+          .filter((error) => error instanceof Error)
+          .map((error) => {
+            error.group = group;
+            return error;
+          });
+      })
+      .then((errors) => {
+        if (cb) {
+          cb(null, errors);
+        }
+        return errors;
+      })
+      .catch((error) => {
+        if (cb) {
+          cb(error);
+        }
+        return Promise.reject(error);
+      });
   }
 
   /**
@@ -216,10 +193,10 @@ class Model extends Emitter {
     const nameStrategy = customNameStrategy || this.propsSettings.nameStrategy;
     let changeCaseMethod = changeCase[nameStrategy] || identityFn;
 
-    return Object.keys(this.constructor.props)
-      .filter((prop) => !get(false, `${prop}.json.hidden`, this.constructor.props))
+    return Object.keys(this.props)
+      .filter((prop) => !get(false, `${prop}.json.hidden`, this.props))
       .filter((prop) => {
-        let groups = get([], `${prop}.json.groups`, this.constructor.props);
+        let groups = get([], `${prop}.json.groups`, this.props);
 
         return (!Array.isArray(groups) || !groups.length) ||
           (Array.isArray(groups) && (groups.indexOf(group) > -1 || group === DEFAULT_GROUP));

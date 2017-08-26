@@ -7,14 +7,13 @@ import ConstraintError from '../errors/ConstraintError';
 import { equalPasswords } from './utils/validators';
 
 const required = (groups = []) => {
-  return (propValue, propName, currentGroup) => {
-    if (currentGroup && groups.length > 0 && groups.includes(currentGroup)) {
-      return;
-    }
+  const constraint = (propValue, propName) => {
     if (propValue == null) {
       throw new ConstraintError(propName, propValue, `${propName} is required property`);
     }
   };
+  constraint.groups = groups;
+  return constraint;
 };
 
 test('Default options', t => {
@@ -187,8 +186,8 @@ test.cb('Validate 1 constraint with default group and fail with ConstraintError'
   };
   let inst = new TestModel();
 
-  inst.validatePropsConstraints()
-    .subscribe((results) => {
+  inst.validate()
+    .then((results) => {
       let err = _.head(results);
 
       t.is(results.length, 1);
@@ -199,7 +198,9 @@ test.cb('Validate 1 constraint with default group and fail with ConstraintError'
       // t.is(err.group, BaseModel.DEFAULT_GROUP);
 
       t.end();
-    }, (err) => {
+    })
+    .catch((err) => {
+      console.error(err);
       t.fail(err.message);
     });
 });
@@ -220,11 +221,13 @@ test.cb('Validate 1 constraint with default group and succeed', t => {
 
   let inst = new TestModel();
 
-  inst.validatePropsConstraints()
-    .subscribe((results) => {
+  inst.validate()
+    .then((results) => {
       t.is(results.length, 0);
       t.end();
-    }, (err) => {
+    })
+    .catch((err) => {
+      console.error(err);
       t.fail(err.message);
     });
 });
@@ -244,11 +247,13 @@ test.cb('Validate 1 constraint with custom group and succeed', t => {
   };
   let inst = new TestModel();
 
-  inst.validatePropsConstraints('custom')
-    .subscribe((results) => {
+  inst.validate('custom')
+    .then((results) => {
       t.is(results.length, 0);
       t.end();
-    }, (err) => {
+    })
+    .catch((err) => {
+      console.error(err);
       t.fail(err.message);
     });
 });
@@ -267,8 +272,8 @@ test.cb('Validate only that constraint that was defined in argument', t => {
   };
   let inst = new TestModel();
 
-  inst.validatePropsConstraints('group2')
-    .subscribe((results) => {
+  inst.validate('group2')
+    .then((results) => {
       let err = _.head(results);
 
       t.is(results.length, 1);
@@ -279,7 +284,9 @@ test.cb('Validate only that constraint that was defined in argument', t => {
       t.is(err.group, 'group2');
 
       t.end();
-    }, (err) => {
+    })
+    .catch((err) => {
+      console.error(err);
       t.fail(err.message);
     });
 });
@@ -308,8 +315,8 @@ test.cb('Validate 1 model validator with default group and fail with ValidatorEr
 
   let inst = new TestModel();
 
-  inst.validateModelValidators()
-    .subscribe((results) => {
+  inst.validate()
+    .then((results) => {
       let err = _.head(results);
 
       t.true(Array.isArray(results));
@@ -322,7 +329,9 @@ test.cb('Validate 1 model validator with default group and fail with ValidatorEr
       // t.is(err.group, BaseModel.DEFAULT_GROUP);
 
       t.end();
-    }, (err) => {
+    })
+    .catch((err) => {
+      console.error(err);
       t.fail(err.message);
     });
 });

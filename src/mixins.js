@@ -7,8 +7,8 @@ import 'rxjs/add/observable/combineLatest';
 import 'rxjs/add/operator/startWith';
 
 export const initGettersSetters = (model) => {
-  const keys = Object.keys(model.constructor.props);
-  const hasComputedFilterFn = (prop) => !has(`${prop}.computed`, model.constructor.props);
+  const keys = Object.keys(model.props);
+  const hasComputedFilterFn = (prop) => !has(`${prop}.computed`, model.props);
 
   const getters = model.propsSettings.useGetters ? keys : [];
   const setters = model.propsSettings.useSetters ? keys.filter(hasComputedFilterFn) : [];
@@ -45,10 +45,10 @@ export const initGettersSetters = (model) => {
 };
 
 export const initComputedProps = (model) => {
-  Object.keys(model.constructor.props)
-    .filter((prop) => !!get([], `${prop}.computed`, model.constructor.props).length)
+  Object.keys(model.props)
+    .filter((prop) => !!get([], `${prop}.computed`, model.props).length)
     .map((prop) => {
-      let subjects = get([], `${prop}.computed`, model.constructor.props)
+      let subjects = get([], `${prop}.computed`, model.props)
         .map((propToObserv) => model.subject(propToObserv).startWith(model.get(propToObserv)));
 
       return Observable.combineLatest(
