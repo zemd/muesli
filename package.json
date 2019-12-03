@@ -32,7 +32,7 @@
     "data flow"
   ],
   "dependencies": {
-    "change-case": "^3.0.1",
+    "change-case": "^4.0.1",
     "lodash": "^4.17.4",
     "run-async": "^2.3.0",
     "rx-emitter": "^2.1.0",
